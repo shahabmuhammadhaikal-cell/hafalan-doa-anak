@@ -1,0 +1,40 @@
+name: Sync aset yang digenerate
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  generate-assets:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install Pillow
+        run: pip install pillow
+
+      - name: Generate ilustrasi orisinal & ikon
+        run: python scripts/generate_assets.py
+
+      - name: Generate package-lock.json
+        run: npm install --package-lock-only --no-audit --no-fund
+
+      - name: Commit hasil generate bila berubah
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add assets package-lock.json
+          if ! git diff --cached --quiet; then
+            git commit -m "chore: generate ilustrasi orisinal & package-lock via CI"
+            git push
+          fi
